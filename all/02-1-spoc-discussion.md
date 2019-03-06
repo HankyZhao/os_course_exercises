@@ -20,19 +20,40 @@
 
 ## 3.1 BIOS
 -  x86中BIOS从磁盘读入的第一个扇区是是什么内容？为什么没有直接读入操作系统内核映像？
+	- bootloader
+	- BIOS最多只能读取一个扇区，而且大小不够读不进来操作系统。而且还需要bootloader确定磁盘文件格式。
 - 比较UEFI和BIOS的区别。
+	- UEFI可以分7个阶段，而BIOS只有两个阶段。
+	- UEFI比BIOS更加安全。
 - 理解rcore中的Berkeley BootLoader (BBL)的功能。
-
+	
 ## 3.2 系统启动流程
 
 - x86中分区引导扇区的结束标志是什么？
+	- 0X55AA
 - x86中在UEFI中的可信启动有什么作用？
+	- 通过启动前的数字签名检查来保证启动介质的安全性
 - RV中BBL的启动过程大致包括哪些内容？
-
+	- 选择一个物理进程做主进程，其他物理进程sleep
+	- 对device tree筛选，过滤掉OS不要的东西
+	- 其他物理进程初始化PMP，trap handler并且进入supervisor 模式
+	- CSR寄存器初始化
+	- PMP
+	- 执行mret
+	
 ## 3.3 中断、异常和系统调用比较
 - 什么是中断、异常和系统调用？
+
+	- 分别是外部意外的相应、指令执行意外的响应、系统调用指令的响应
+
 -  中断、异常和系统调用的处理流程有什么异同？
+	- 相同：查看中断向量表，处理完毕后都恢复原状态
+	- 不同：各自跳转到对应的程序
+	
 - 以ucore/rcore lab8的answer为例，ucore的系统调用有哪些？大致的功能分类有哪些？
+
+	- ucore的系统调用有22个，分别是sys\_exit, sys\_fork, sys\_wait, sys\_exec, sys\_yield, sys\_kill, sys\_getpid, sys\_putc, sys\_pgdir, sys\_gettime, sys\_lab6\_set\_priority, sys\_sleep, sys\_open, sys\_close, sys\_read, sys\_write, sys\_seek, sys\_fstat, sys\_fsync, sys\_getcwd, sys\_getdirentry, sys\_dup。
+	- 一种和进程文件的执行相关，一种和文件外设的读写有关。
 
 ## 3.4 linux系统调用分析
 - 通过分析[lab1_ex0](https://github.com/chyyuu/ucore_lab/blob/master/related_info/lab1/lab1-ex0.md)了解Linux应用的系统调用编写和含义。(仅实践，不用回答)
@@ -47,9 +68,17 @@
  
 ## 3.6 请分析函数调用和系统调用的区别
 - 系统调用与函数调用的区别是什么？
-- 通过分析x86中函数调用规范以及`int`、`iret`、`call`和`ret`的指令准确功能和调用代码，比较x86中函数调用与系统调用的堆栈操作有什么不同？
-- 通过分析RV中函数调用规范以及`ecall`、`eret`、`jal`和`jalr`的指令准确功能和调用代码，比较x86中函数调用与系统调用的堆栈操作有什么不同？
 
+	- 系统调用通过int，syscall指令进行，用eret返回。函数调用用call指令调用，ret指令返回。
+- 通过分析x86中函数调用规范以及`int`、`iret`、`call`和`ret`的指令准确功能和调用代码，比较x86中函数调用与系统调用的堆栈操作有什么不同？
+
+	- 函数调用不切换进程，系统调用切换了进程，使用的系统调用函数的堆栈系统。
+
+- 通过分析RV中函数调用规范以及`ecall`、`eret`、`jal`和`jalr`的指令准确功能和调用代码，比较x86中函数调用与系统调用的堆栈操作有什么不同？
+	- ecall向运行时环境发出请求，切换supervisor mode
+	- eret返回源程序，切换user mode
+	- jal跳转立即数地址，返回地址保存$ra寄存器
+	- jalr跳转寄存器地址，返回地址保存$ra寄存器
 
 ## 课堂实践 （在课堂上根据老师安排完成，课后不用做）
 ### 练习一
